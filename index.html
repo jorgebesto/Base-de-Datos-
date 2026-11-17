@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguimiento de saneamiento · Tipo de predio</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f5f2; --panel:#ffffff; --ink:#1d2321; --muted:#5f6b67; --line:#dfe3df;
+  --brand:#16443f; --brand2:#21625a; --accent:#c8781a; --warn:#b4471c; --ok:#2e7d4f;
+  --chip:#eef1ee; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+header{background:var(--brand);color:#fff;padding:14px 22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.2px}
+header .sub{font-size:12px;opacity:.75}
+header .sp{flex:1}
+header label.who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:6px}
+header input{border:0;border-radius:6px;padding:6px 8px;font:inherit;width:150px}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:7px 12px;font:inherit;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:#b9c2bd}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.pri:hover{filter:brightness(.95)}
+.btn.dark{background:var(--brand2);border-color:var(--brand2);color:#fff}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--brand2)}
+.btn.danger{color:var(--warn)}
+header .btn{border-color:rgba(255,255,255,.25)}
+.dirty{background:#fde7c4;color:#7a4300;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600}
+nav{display:flex;gap:2px;padding:0 22px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:0;background:none;padding:12px 14px;font:inherit;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--brand);border-bottom-color:var(--accent);font-weight:600}
+nav .n{background:var(--chip);border-radius:10px;padding:1px 7px;font-size:12px;margin-left:5px}
+nav button.on .n{background:var(--accent);color:#fff}
+main{padding:18px 22px 60px;max-width:1400px;margin:0 auto}
+section{display:none} section.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:14px}
+.empty{max-width:640px;margin:40px auto;text-align:center}
+.empty h2{margin:0 0 8px;font-size:20px}
+.empty p{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff}
+textarea{width:100%;resize:vertical}
+.grp{margin-bottom:18px}
+.grp h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+.grp h3 .cnt{background:var(--brand2);color:#fff;border-radius:10px;padding:0 8px;font-size:12px}
+.grp .desc{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;background:#fafbf9;position:sticky;top:0}
+tbody tr.click{cursor:pointer} tbody tr.click:hover{background:#f6f8f5}
+.fmi{font-family:Consolas,"SFMono-Regular",monospace;font-weight:600;color:var(--brand)}
+.badge{display:inline-block;border-radius:5px;padding:2px 7px;font-size:12px;font-weight:600;color:#fff;white-space:nowrap}
+.dias{font-variant-numeric:tabular-nums;font-weight:600}
+.dias.v{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:12.5px;display:flex;gap:6px;align-items:center}
+.chip .dot{width:9px;height:9px;border-radius:50%}
+.chip.on{border-color:var(--brand2);background:#e7f0ee;font-weight:600}
+.mgrp{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+.mgrp .hd{display:flex;gap:10px;align-items:center;padding:8px 10px;background:#fafbf9;border-bottom:1px solid var(--line);border-radius:8px 8px 0 0;flex-wrap:wrap}
+.mgrp .hd b{font-size:13.5px}
+.warn{color:var(--warn);font-size:12.5px}
+dialog{border:0;border-radius:12px;padding:0;width:min(1000px,96vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(20,30,28,.45)}
+.dh{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.dh h2{margin:0;font-size:17px}
+.db{padding:16px 18px;overflow:auto;max-height:calc(92vh - 60px)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 14px}
+.fields label{display:flex;flex-direction:column;font-size:11.5px;color:var(--muted);gap:3px}
+.fields label.w2{grid-column:span 2}
+.fields label.wall{grid-column:1/-1}
+.fields input,.fields select{width:100%}
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px}
+.tl .it{position:relative;margin-bottom:10px}
+.tl .it:before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--c,#999)}
+.tl .it .m{font-size:12px;color:var(--muted)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.cols2{grid-template-columns:1fr}.fields label.w2{grid-column:auto}}
+.mailbody{font-family:Consolas,monospace;font-size:12.5px;min-height:340px}
+.note{background:#fff6e5;border:1px solid #f1d29b;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#6b4300}
+.note.red{background:#fdecea;border-color:#f3b8ad;color:#86281b}
+.dir input{width:100%;border-color:transparent;background:transparent;padding:4px 6px}
+.dir input:hover,.dir input:focus{border-color:var(--line);background:#fff}
+.dir tr.miss td{background:#fff8ef}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99}
+.toast.on{opacity:.95}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:150px;box-shadow:var(--shadow)}
+.kpi .v{font-size:22px;font-weight:700;color:var(--brand)}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi.alert .v{color:var(--warn)}
+details summary{cursor:pointer;color:var(--brand2);font-weight:600;margin:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Seguimiento de saneamiento · Tipo de predio</h1>
+    <div class="sub" id="fileInfo">Planeación → ORIP · sin archivo cargado</div>
+  </div>
+  <div class="sp"></div>
+  <span class="dirty" id="dirty" hidden>Cambios sin descargar</span>
+  <label class="who">Registrado por <input id="usuario" placeholder="Tu nombre"></label>
+  <label class="btn">Cargar Excel<input type="file" id="fileIn" accept=".xlsx,.xls" hidden></label>
+  <button class="btn pri" id="btnExport" disabled>Descargar Excel</button>
+</header>
+<nav id="tabs">
+  <button data-t="pend" class="on">Qué falta <span class="n" id="nPend">0</span></button>
+  <button data-t="folios">Folios <span class="n" id="nFol">0</span></button>
+  <button data-t="nuevo">Agregar folios</button>
+  <button data-t="orip">Directorio ORIP</button>
+  <button data-t="plan">Directorio Planeación</button>
+  <button data-t="ajustes">Ajustes y plantillas</button>
+</nav>
+<main>
+  <div id="vacio" class="card empty">
+    <h2>Carga tu Excel de seguimiento</h2>
+    <p>Abre el archivo <b>Seguimiento_Saneamiento.xlsx</b>, o el último que hayas descargado de esta página. Todo se trabaja en tu navegador: el archivo no se sube a ningún lado.</p>
+    <p class="small">Cuando termines, usa <b>Descargar Excel</b>. Ese archivo nuevo es el que se guarda y se comparte con el equipo.</p>
+    <div id="recuperar"></div>
+  </div>
+
+  <section id="s-pend"></section>
+  <section id="s-folios">
+    <div class="chips" id="chips"></div>
+    <div class="card">
+      <div class="row" style="margin-bottom:10px">
+        <input id="fBuscar" placeholder="Buscar FMI, municipio, cédula, observación…" style="flex:1;min-width:220px">
+        <select id="fEnc"><option value="">Todos los encargados</option></select>
+        <select id="fOrip"><option value="">Todas las ORIP</option></select>
+        <label class="small"><input type="checkbox" id="fSoloPend"> Solo con algo pendiente</label>
+      </div>
+      <div style="max-height:68vh;overflow:auto"><table id="tFolios"></table></div>
+    </div>
+  </section>
+
+  <section id="s-nuevo">
+    <div class="cols2">
+      <div class="card">
+        <h3 style="margin-top:0">Agregar un folio</h3>
+        <div class="row" style="margin-bottom:10px">
+          <input id="nFmi" placeholder="FMI, ej. 370-278830" style="flex:1">
+          <button class="btn dark" id="nBuscar">Buscar en Matrix</button>
+        </div>
+        <div id="nMsg" class="small muted" style="margin-bottom:10px"></div>
+        <div class="fields" id="nFields"></div>
+        <div class="row" style="margin-top:12px"><button class="btn pri" id="nGuardar">Agregar a la base</button></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Agregar varios a la vez</h3>
+        <p class="small muted">Pega una matrícula por línea. Las que estén en Matrix se llenan solas. Las que no estén igual se agregan, y luego completas los datos en la ficha del folio.</p>
+        <textarea id="mLista" rows="7" placeholder="370-278830&#10;060-20118&#10;…"></textarea>
+        <div class="fields" style="margin-top:10px">
+          <label>Quién solicitó el cambio<input id="mSol" list="dlSol"></label>
+          <label>Fecha de solicitud<input type="date" id="mFecha"></label>
+          <label>Encargado<input id="mEnc" list="dlEnc"></label>
+          <label>Etapa inicial<select id="mEtapa"></select></label>
+          <label class="wall">Motivo<input id="mMot" placeholder="ej. corrección tipo de predio por diferencia VUR vs inventario"></label>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn pri" id="mGuardar">Agregar todos</button><span id="mMsg" class="small muted"></span></div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 style="margin:0 0 4px">Actualizar Matrix</h3>
+        <p class="small muted">Si bajas una Matrix más nueva, cárgala aquí para que la búsqueda use los datos actuales. Debe tener la columna "FOLIO DE MATRÍCULA".</p>
+        <label class="btn">Cargar Matrix nueva<input type="file" id="mxIn" accept=".xlsx,.xls" hidden></label>
+        <span id="mxInfo" class="small muted"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-orip">
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <div style="flex:1"><b>Oficinas de Registro (ORIP)</b><div class="small muted">El código es el prefijo del folio (190 en 190-82749). Las filas resaltadas tienen folios por enviar o reiterar y les falta el correo.</div></div>
+        <button class="btn sm" id="oAdd">+ Agregar ORIP</button>
+      </div>
+      <div style="max-height:70vh;overflow:auto"><table class="dir" id="tOrip"></table></div>
+    </div>
+  </section>
+
+  <section id="s-plan">
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <div style="flex:1"><b>Secretarías de Planeación</b><div class="small muted">Una fila por municipio. Las filas resaltadas tienen folios por pedir o reiterar y les falta el correo. Si hay varios correos, sepáralos con punto y coma.</div></div>
+        <button class="btn sm" id="pAdd">+ Agregar municipio</button>
+      </div>
+      <div style="max-height:70vh;overflow:auto"><table class="dir" id="tPlan"></table></div>
+    </div>
+  </section>
+
+  <section id="s-ajustes"></section>
+</main>
+
+<dialog id="dFolio"><div class="dh"><h2 id="dfTitulo"></h2><span id="dfBadge"></span><div style="flex:1"></div><button class="btn" onclick="dFolio.close()">Cerrar</button></div><div class="db" id="dfBody"></div></dialog>
+<dialog id="dMail"><div class="dh"><h2 id="dmTitulo">Correo</h2><div style="flex:1"></div><button class="btn" onclick="dMail.close()">Cerrar</button></div><div class="db" id="dmBody"></div></dialog>
+<datalist id="dlSol"></datalist><datalist id="dlEnc"></datalist>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ constantes ============ */
+const ETAPAS = [
+  {id:'E1', label:'1. Pendiente solicitar a Planeación', color:'#7c5cc4'},
+  {id:'E2', label:'2. Solicitado a Planeación',          color:'#3d6fb6'},
+  {id:'E3', label:'3. Reiterado a Planeación',           color:'#2c4f8a'},
+  {id:'E4', label:'4. Respuesta de Planeación',          color:'#c8781a'},
+  {id:'E5', label:'5. Enviado a ORIP',                   color:'#1f8a83'},
+  {id:'E6', label:'6. Reiterado a ORIP',                 color:'#146660'},
+  {id:'E7', label:'7. ORIP pide algo / rechazo',         color:'#b4471c'},
+  {id:'E8', label:'8. Corregido / entregado',            color:'#2e7d4f'},
+  {id:'XS', label:'Saneamiento físico-catastral',        color:'#8a6d3b'},
+  {id:'XM', label:'Cambio en Matrix / memorando',        color:'#6d6a8a'},
+  {id:'XP', label:'Pieza procesal',                      color:'#7a5c5c'},
+  {id:'XN', label:'Sin estado (revisar)',                color:'#8b918e'},
+];
+const ET = Object.fromEntries(ETAPAS.map(e=>[e.id,e]));
+const SIGUIENTE = {E1:'E2',E2:'E4',E3:'E4',E4:'E5',E5:'E8',E6:'E8',E7:'E5',XS:'E1',XM:'E8',XP:'E1',XN:'E1',E8:'E8'};
+const SEG_COLS = ['FMI','ETAPA','FECHA ETAPA','ENCARGADO','SOLICITANTE','FECHA SOLICITUD','MOTIVO','ORIGEN','MUNICIPIO','DEPARTAMENTO','CÓDIGO ORIP','CÉDULA CATASTRAL','DIRECCIÓN','NÚMERO MATRIX','TIPO EN MATRIX','TIPO EN FOLIO (VUR)','TIPO CORRECTO (PLANEACIÓN)','RADICADO PLANEACIÓN','FECHA SOLICITUD PLANEACIÓN','RADICADO ALCALDÍA','FECHA RESPUESTA PLANEACIÓN','QUIÉN ENVIÓ A ORIP','FECHA ENVÍO ORIP','RADICADO/TURNO ORIP','REITERACIONES','OBSERVACIONES','ESTADO ORIGINAL (MIGRACIÓN)'];
+const SEG_DATES = new Set(['FECHA ETAPA','FECHA SOLICITUD','FECHA SOLICITUD PLANEACIÓN','FECHA RESPUESTA PLANEACIÓN','FECHA ENVÍO ORIP']);
+const BIT_COLS = ['FMI','FECHA','ETAPA','DETALLE','REGISTRADO POR','FECHA REGISTRO'];
+const ORIP_COLS = ['CÓDIGO','ORIP','REGISTRADOR','CORREO','DIRECCIÓN','CIUDAD - DEPARTAMENTO'];
+const PLAN_COLS = ['MUNICIPIO','DEPARTAMENTO','DESTINATARIO','CORREO','DIRECCIÓN','NOTA'];
+const TIPOS = ['','URBANO','RURAL','SIN INFORMACIÓN'];
+
+const AJ_DEF = {
+  PLAZO_DIAS_HABILES: '15',
+  ORIP_PARA_ADICIONAL: 'correspondencia@supernotariado.gov.co',
+  CC: 'apvenegas@saesas.gov.co; jcontreras@saesas.gov.co; correspondenciaentrada@saesas.gov.co',
+  CORREOS_RESPUESTA: 'apvenegas@saesas.gov.co josuarez@saesas.gov.co jcontreras@saesas.gov.co correspondenciaentrada@saesas.gov.co',
+  FIRMA_NOMBRE: 'ALEXANDRA PATIÑO ALVAREZ',
+  FIRMA_CARGO: 'Directora para la Democratización de Activos Inmuebles Rurales (A).',
+  ASUNTO_ORIP: 'Corrección información datos básicos “TIPO DE PREDIO” del Folio de Matrícula Inmobiliaria No. {FMI}.',
+  ASUNTO_REIT_ORIP: 'Reiteración - Corrección información datos básicos “TIPO DE PREDIO” del Folio de Matrícula Inmobiliaria No. {FMI}.',
+  ASUNTO_SOL_PLAN: 'Solicitud de certificación de uso del suelo - predios administrados por la SAE S.A.S. en {MUNICIPIO}',
+  ASUNTO_REIT_PLAN: 'Reiteración - Solicitud de certificación de uso del suelo - predios administrados por la SAE S.A.S. en {MUNICIPIO}',
+  PLANTILLA_ORIP:
+`Doctor(a):
+{REGISTRADOR}
+Registrador(a)
+OFICINA DE REGISTRO DE INSTRUMENTOS PÚBLICOS DE {ORIP}
+{CORREO_ORIP}
+{DIRECCION_ORIP}
+{CIUDAD_ORIP}
+
+ASUNTO: Corrección información datos básicos “TIPO DE PREDIO” del Folio de Matrícula Inmobiliaria No. {FMI}.
+
+La Sociedad de Activos Especiales SAE S.A.S, identificada con NIT 900265408-3 tiene entre sus funciones determinar y ejecutar los actos administrativos necesarios y suficientes para la efectiva y correcta administración de los bienes que son dejados a su disposición, esto de acuerdo con el marco normativo previsto por la Ley 1708 de 2014, a través de la cual se le faculta, como administrador de los bienes, puestos a disposición del Fondo para la Rehabilitación, Inversión Social y Lucha contra el Crimen Organizado (FRISCO).
+
+Con el ánimo de depurar y sanear la situación jurídica y catastral de los bienes que están catalogados con un uso del suelo diferente al consignado en el folio de matrícula inmobiliaria, muy respetuosamente, y en el marco legal del manejo y reserva de la información, me permito solicitar lo siguiente:
+
+De acuerdo con el análisis geográfico realizado a los predios y normas de uso puntual emitidas por la secretaria de planeación de {MUNICIPIO}, se determina que este NO debe estar destinado a un uso del suelo {USO_INCORRECTO}, según el POT (Plan de Ordenamiento Territorial) vigente, {UBICACION_PERIMETRO} designados cartográficamente, para dar cumplimiento a la Ley 1759 de 2012 y la Instrucción Administrativa N°18 del 17 de julio de 2018 de la SNR, ponemos a disposición la certificación de norma allegada por la secretaria de planeación del municipio de {MUNICIPIO}, (ver anexo) donde se comprueba que su uso actual y correcto es {USO_CORRECTO}.
+
+La anterior solicitud, la iniciamos con el fin de avanzar en el proceso que se adelanta al interior de la SAE en relación con el saneamiento jurídico de los bienes que se encuentran bajo administración y en el marco del principio de coordinación:
+
+El artículo 6 de la ley 489 de 1998. Principio de coordinación. En virtud del principio de coordinación y colaboración, las autoridades administrativas deben garantizar la armonía en el ejercicio de sus respectivas funciones con el fin de lograr los fines y cometidos estatales. (..)
+
+Según el artículo 37 de la ley 2294 del 2023. Obligatoriedad del Uso de la Información Oficial. Las entidades públicas deberán suministrar y disponer la información oficial, la cual, será de obligatorio uso para las entidades competentes de adelantar procesos de formalización, adjudicación y regularización de la propiedad. En ningún caso se supeditará la realización de los trámites a que los particulares suministren información de carácter oficial. Para tal efecto las entidades oficiales establecerán mecanismos de interoperabilidad de la información, dispondrán de servicios de intercambio de información en tiempo real o estrategias de suministro expedito de la información bajo su responsabilidad. (...)
+
+Es de anotar que la solicitud expuesta anteriormente es con el fin de realizar la correcta administración y saneamiento de los inmuebles en custodia de la Entidad. Los documentos solicitados o respuestas a oficio pueden ser remitidos al correo electrónico {CORREOS_RESPUESTA} y/o enviarlos por cualquier medio de transferencia, cualquier duda o inquietud puede ser resuelta a estos mismos correos electrónicos.
+
+Agradecemos su valiosa colaboración en el asunto.
+
+Cordialmente:
+{FIRMA_NOMBRE}
+{FIRMA_CARGO}
+
+ANEXOS: Respuesta Alcaldía de {MUNICIPIO}, Traza de correo`,
+  PLANTILLA_REIT_ORIP:
+`Doctor(a):
+{REGISTRADOR}
+Registrador(a)
+OFICINA DE REGISTRO DE INSTRUMENTOS PÚBLICOS DE {ORIP}
+{CORREO_ORIP}
+{DIRECCION_ORIP}
+{CIUDAD_ORIP}
+
+ASUNTO: Reiteración de la solicitud de corrección de información de datos básicos “TIPO DE PREDIO” del Folio de Matrícula Inmobiliaria No. {FMI}.
+
+La Sociedad de Activos Especiales SAE S.A.S, identificada con NIT 900265408-3, en su calidad de administradora de los bienes puestos a disposición del Fondo para la Rehabilitación, Inversión Social y Lucha contra el Crimen Organizado (FRISCO), conforme a la Ley 1708 de 2014, se permite reiterar la solicitud remitida a esa Oficina {REF_ENVIO_ORIP}, mediante la cual se pidió corregir el dato “TIPO DE PREDIO” del folio de matrícula inmobiliaria No. {FMI}, ubicado en el municipio de {MUNICIPIO}, para que quede registrado como {USO_CORRECTO}, con base en la certificación de uso del suelo expedida por la Secretaría de Planeación de {MUNICIPIO}.
+
+A la fecha han transcurrido {DIAS} días hábiles sin que conozcamos el estado del trámite. Por lo anterior, de manera respetuosa solicitamos se nos informe el estado de la solicitud o, si hace falta algún documento adicional, se nos indique para allegarlo a la mayor brevedad.
+
+Para facilitar la gestión, adjuntamos nuevamente la certificación de uso del suelo y la solicitud inicial.
+
+Lo anterior, en el marco del principio de coordinación (artículo 6 de la Ley 489 de 1998) y de los términos para resolver peticiones previstos en el artículo 14 de la Ley 1437 de 2011, sustituido por la Ley 1755 de 2015.
+
+Las respuestas pueden ser remitidas a los correos electrónicos {CORREOS_RESPUESTA}.
+
+Agradecemos su valiosa colaboración en el asunto.
+
+Cordialmente:
+{FIRMA_NOMBRE}
+{FIRMA_CARGO}
+
+ANEXOS: Solicitud inicial, certificación de uso del suelo de {MUNICIPIO}`,
+  PLANTILLA_SOL_PLAN:
+`Señores
+SECRETARÍA DE PLANEACIÓN
+Alcaldía Municipal de {MUNICIPIO} - {DEPARTAMENTO}
+{CORREO_PLAN}
+
+ASUNTO: Solicitud de certificación de uso del suelo (clasificación del suelo) de predios administrados por la SAE S.A.S.
+
+La Sociedad de Activos Especiales SAE S.A.S, identificada con NIT 900265408-3, en su calidad de administradora de los bienes puestos a disposición del Fondo para la Rehabilitación, Inversión Social y Lucha contra el Crimen Organizado (FRISCO), conforme a la Ley 1708 de 2014, y con el ánimo de depurar y sanear la situación jurídica y catastral de los bienes bajo su administración, respetuosamente solicita certificar la clasificación del suelo (urbano o rural), según el Plan de Ordenamiento Territorial vigente, de los siguientes predios ubicados en el municipio de {MUNICIPIO}:
+
+{LISTA_PREDIOS}
+
+Una vez expedida la certificación, solicitamos amablemente remitirla a la Oficina de Registro de Instrumentos Públicos competente para la corrección del dato “tipo de predio” en el folio, con copia a esta Entidad, o enviarla a los correos electrónicos {CORREOS_RESPUESTA}.
+
+Lo anterior, en el marco del principio de coordinación (artículo 6 de la Ley 489 de 1998) y del artículo 37 de la Ley 2294 de 2023 sobre la obligatoriedad del uso de la información oficial.
+
+Agradecemos su valiosa colaboración en el asunto.
+
+Cordialmente:
+{FIRMA_NOMBRE}
+{FIRMA_CARGO}`,
+  PLANTILLA_REIT_PLAN:
+`Señores
+SECRETARÍA DE PLANEACIÓN
+Alcaldía Municipal de {MUNICIPIO} - {DEPARTAMENTO}
+{CORREO_PLAN}
+
+ASUNTO: Reiteración de solicitud de certificación de uso del suelo (clasificación del suelo) de predios administrados por la SAE S.A.S.
+
+La Sociedad de Activos Especiales SAE S.A.S, identificada con NIT 900265408-3, en su calidad de administradora de los bienes puestos a disposición del Fondo para la Rehabilitación, Inversión Social y Lucha contra el Crimen Organizado (FRISCO), conforme a la Ley 1708 de 2014, se permite reiterar la solicitud {REF_SOLICITUD}, mediante la cual se pidió certificar la clasificación del suelo (urbano o rural), según el Plan de Ordenamiento Territorial vigente, de los siguientes predios ubicados en el municipio de {MUNICIPIO}:
+
+{LISTA_PREDIOS}
+
+A la fecha han transcurrido {DIAS} días hábiles desde la solicitud sin que hayamos recibido respuesta. Por lo anterior, de manera respetuosa solicitamos dar trámite a la solicitud o informarnos su estado.
+
+Una vez expedida la certificación, solicitamos amablemente remitirla a la Oficina de Registro de Instrumentos Públicos competente para la corrección del dato “tipo de predio” en el folio, con copia a esta Entidad, o enviarla a los correos electrónicos {CORREOS_RESPUESTA}.
+
+Lo anterior, en el marco del principio de coordinación (artículo 6 de la Ley 489 de 1998), del artículo 37 de la Ley 2294 de 2023 sobre la obligatoriedad del uso de la información oficial y de los términos para resolver peticiones previstos en el artículo 14 de la Ley 1437 de 2011, sustituido por la Ley 1755 de 2015.
+
+Agradecemos su valiosa colaboración en el asunto.
+
+Cordialmente:
+{FIRMA_NOMBRE}
+{FIRMA_CARGO}`,
+};
+const AJ_LABELS = {
+  PLAZO_DIAS_HABILES:'Días hábiles sin respuesta para sugerir reiterar',
+  ORIP_PARA_ADICIONAL:'Correo que siempre va en "Para" junto con la ORIP',
+  CC:'Copias (CC) de todos los correos',
+  CORREOS_RESPUESTA:'Correos a los que se pide responder (van en el texto)',
+  FIRMA_NOMBRE:'Firma: nombre', FIRMA_CARGO:'Firma: cargo',
+  ASUNTO_ORIP:'Asunto: envío a la ORIP', PLANTILLA_ORIP:'Texto: envío a la ORIP',
+  ASUNTO_REIT_ORIP:'Asunto: reiteración a la ORIP', PLANTILLA_REIT_ORIP:'Texto: reiteración a la ORIP',
+  ASUNTO_SOL_PLAN:'Asunto: solicitud a Planeación', PLANTILLA_SOL_PLAN:'Texto: solicitud a Planeación',
+  ASUNTO_REIT_PLAN:'Asunto: reiteración a Planeación', PLANTILLA_REIT_PLAN:'Texto: reiteración a Planeación',
+};
+
+/* ============ estado ============ */
+let S = null;               // {seg:[], bit:[], orip:{}, plan:{}, aj:{}, matrix:{header,rows}, fileName}
+let dirty = false;
+const LS_KEY = 'seg_saneamiento_v1';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ============ utilidades ============ */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const pad = n => String(n).padStart(2,'0');
+const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const hoyISO = () => isoOf(new Date());
+function toISO(v){
+  if (v === null || v === undefined || v === '') return '';
+  if (v instanceof Date) { if (isNaN(v)) return ''; return isoOf(new Date(v.getTime() + 12*3600e3)); }
+  if (typeof v === 'number') { const d = new Date(Math.round((v - 25569) * 86400000)); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`; }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  return '';
+}
+const fmt = iso => iso ? iso.split('-').reverse().join('/') : '';
+const parseISO = iso => { const [y,m,d] = iso.split('-').map(Number); return new Date(y, m-1, d); };
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('on'),2600); }
+const aj = k => (S && S.aj[k] !== undefined && S.aj[k] !== '') ? S.aj[k] : AJ_DEF[k];
+const plazo = () => Math.max(1, parseInt(aj('PLAZO_DIAS_HABILES')) || 15);
+const usuario = () => $('#usuario').value.trim() || 'Sin nombre';
+
+/* ---- festivos de Colombia (Ley 51 de 1983) ---- */
+const _fest = {};
+function pascua(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(y,mo-1,da); }
+function festivos(y){
+  if (_fest[y]) return _fest[y];
+  const set = new Set(), add = d => set.add(isoOf(d));
+  const lunes = d => { const x = new Date(d); while (x.getDay() !== 1) x.setDate(x.getDate()+1); return x; };
+  [[0,1],[4,1],[6,20],[7,7],[11,8],[11,25]].forEach(([m,d]) => add(new Date(y,m,d)));
+  [[0,6],[2,19],[5,29],[7,15],[9,12],[10,1],[10,11]].forEach(([m,d]) => add(lunes(new Date(y,m,d))));
+  const p = pascua(y), off = n => { const x = new Date(p); x.setDate(x.getDate()+n); return x; };
+  add(off(-3)); add(off(-2)); add(lunes(off(39))); add(lunes(off(60))); add(lunes(off(68)));
+  return _fest[y] = set;
+}
+function esHabil(d){ const w = d.getDay(); return w !== 0 && w !== 6 && !festivos(d.getFullYear()).has(isoOf(d)); }
+function diasHab(desdeISO){
+  if (!desdeISO) return null;
+  const d = parseISO(desdeISO), hoy = parseISO(hoyISO());
+  if (d >= hoy) return 0;
+  let n = 0; const x = new Date(d);
+  while (x < hoy) { x.setDate(x.getDate()+1); if (esHabil(x)) n++; }
+  return n;
+}
+
+function etapaId(label){
+  const t = norm(label);
+  for (const e of ETAPAS) if (norm(e.label) === t) return e.id;
+  const m = t.match(/^([1-8])\./); if (m) return 'E'+m[1];
+  for (const e of ETAPAS) if (e.id[0]==='X' && t.includes(norm(e.label).slice(0,10))) return e.id;
+  return 'XN';
+}
+const badge = id => `<span class="badge" style="background:${ET[id].color}">${esc(ET[id].label)}</span>`;
+const codigoDe = fmi => String(fmi).split('-')[0].trim();
+const keyPlan = (m,d) => norm(m)+'|'+norm(d);
+
+/* ============ lectura de Excel ============ */
+function hojaPor(wb, ...nombres){
+  for (const n of nombres){ const k = wb.SheetNames.find(s => norm(s) === norm(n)); if (k) return wb.Sheets[k]; }
+  return null;
+}
+function aoa(ws){ return ws ? XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''}) : []; }
+function objetos(ws){
+  const a = aoa(ws); if (!a.length) return [];
+  const h = a[0].map(x => String(x).trim());
+  return a.slice(1).filter(r => r.some(v => v !== '' && v !== null)).map(r => Object.fromEntries(h.map((k,i) => [k, r[i] ?? ''])));
+}
+function leerMaestro(wb, nombre){
+  const wsSeg = hojaPor(wb, 'Seguimiento');
+  if (!wsSeg){
+    if (hojaPor(wb,'Proceso','Decreto','Priorización Unica')) throw new Error('Este parece ser el Excel original de Saneamiento. Carga el archivo Seguimiento_Saneamiento.xlsx, o el último que descargaste de esta página.');
+    throw new Error('El archivo no tiene la hoja "Seguimiento".');
+  }
+  const st = {seg:[], bit:[], orip:{}, plan:{}, aj:{}, matrix:{header:[], rows:[]}, fileName:nombre};
+  for (const o of objetos(wsSeg)){
+    const r = {};
+    for (const c of SEG_COLS) r[c] = SEG_DATES.has(c) ? toISO(o[c]) : (o[c] instanceof Date ? toISO(o[c]) : String(o[c] ?? '').trim());
+    if (!r.FMI) continue;
+    r.REITERACIONES = parseInt(r.REITERACIONES) || 0;
+    r._e = etapaId(r.ETAPA); r.ETAPA = ET[r._e].label;
+    if (!r['CÓDIGO ORIP']) r['CÓDIGO ORIP'] = codigoDe(r.FMI);
+    st.seg.push(r);
+  }
+  for (const o of objetos(hojaPor(wb,'Bitacora','Bitácora'))){
+    st.bit.push({FMI:String(o.FMI).trim(), FECHA:toISO(o.FECHA), ETAPA:String(o.ETAPA||''), DETALLE:String(o.DETALLE||''), 'REGISTRADO POR':String(o['REGISTRADO POR']||''), 'FECHA REGISTRO':toISO(o['FECHA REGISTRO'])});
+  }
+  for (const o of objetos(hojaPor(wb,'ORIP'))){
+    const c = String(o['CÓDIGO']).trim(); if (!c) continue;
+    st.orip[c] = Object.fromEntries(ORIP_COLS.map(k => [k, String(o[k] ?? '').trim()])); st.orip[c]['CÓDIGO'] = c;
+  }
+  for (const o of objetos(hojaPor(wb,'Planeacion','Planeación'))){
+    if (!String(o.MUNICIPIO).trim()) continue;
+    st.plan[keyPlan(o.MUNICIPIO,o.DEPARTAMENTO)] = Object.fromEntries(PLAN_COLS.map(k => [k, String(o[k] ?? '').trim()]));
+  }
+  for (const o of objetos(hojaPor(wb,'Ajustes'))){ const k = String(o.CLAVE).trim(); if (k) st.aj[k] = String(o.VALOR ?? ''); }
+  const mx = aoa(hojaPor(wb,'Matrix','Matrix '));
+  if (mx.length) st.matrix = {header: mx[0].map(String), rows: mx.slice(1).filter(r => r.some(v => v !== ''))};
+  return st;
+}
+function idxMatrix(st){
+  const h = st.matrix.header.map(norm), col = n => h.indexOf(norm(n));
+  const ix = {fmi:col('FOLIO DE MATRÍCULA'), mat:col('NÚMERO MATRIX'), dep:col('DEPARTAMENTO'), mun:col('MUNICIPIO'), dir:col('DIRECCIÓN'), ced:col('CÉDULA CATASTRAL'), tipo:col('SUBTIPO ACTIVO'), ver:col('VEREDA')};
+  const map = new Map();
+  if (ix.fmi >= 0) for (const r of st.matrix.rows) map.set(String(r[ix.fmi]).trim(), r);
+  return {ix, map};
+}
+let MX = {ix:{}, map:new Map()};
+
+/* ============ guardar / exportar ============ */
+function marcarCambio(){
+  dirty = true; $('#dirty').hidden = false;
+  try { localStorage.setItem(LS_KEY, JSON.stringify({t:Date.now(), S})); } catch(e) {}
+  renderTodo();
+}
+function serial(iso){ const [y,m,d] = iso.split('-').map(Number); return (Date.UTC(y,m-1,d) - Date.UTC(1899,11,30)) / 86400000; }
+function hoja(header, filas, fechas, anchos){
+  const data = [header, ...filas.map(f => header.map((h,i) => { const v = f[i]; return (fechas.has(h) && v) ? serial(v) : (v ?? ''); }))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  header.forEach((h,c) => { if (fechas.has(h)) for (let r = 1; r < data.length; r++){ const a = XLSX.utils.encode_cell({r,c}); if (ws[a] && typeof ws[a].v === 'number') ws[a].z = 'dd/mm/yyyy'; } });
+  ws['!cols'] = header.map(h => ({wch: anchos[h] || 16}));
+  if (ws['!ref']) ws['!autofilter'] = {ref: ws['!ref']};
+  return ws;
+}
+function exportar(){
+  const wb = XLSX.utils.book_new();
+  const hSeg = [...SEG_COLS, 'DÍAS HÁBILES EN LA ETAPA', 'QUÉ FALTA'];
+  const filas = S.seg.map(r => { const p = pendiente(r); return [...SEG_COLS.map(c => r[c]), diasHab(r['FECHA ETAPA']) ?? '', p ? p.txt : '']; });
+  XLSX.utils.book_append_sheet(wb, hoja(hSeg, filas, SEG_DATES, {FMI:13, ETAPA:30, OBSERVACIONES:60, 'ESTADO ORIGINAL (MIGRACIÓN)':50, 'DIRECCIÓN':30, MOTIVO:28, 'QUÉ FALTA':45}), 'Seguimiento');
+  const bits = [...S.bit].sort((a,b) => a.FMI.localeCompare(b.FMI) || a.FECHA.localeCompare(b.FECHA));
+  XLSX.utils.book_append_sheet(wb, hoja(BIT_COLS, bits.map(b => BIT_COLS.map(c => b[c])), new Set(['FECHA','FECHA REGISTRO']), {ETAPA:30, DETALLE:80, 'REGISTRADO POR':18}), 'Bitacora');
+  const orips = Object.values(S.orip).sort((a,b) => a['CÓDIGO'].localeCompare(b['CÓDIGO']));
+  XLSX.utils.book_append_sheet(wb, hoja(ORIP_COLS, orips.map(o => ORIP_COLS.map(c => o[c])), new Set(), {ORIP:22, REGISTRADOR:30, CORREO:40, 'DIRECCIÓN':30, 'CIUDAD - DEPARTAMENTO':24}), 'ORIP');
+  const plans = Object.values(S.plan).sort((a,b) => (a.DEPARTAMENTO+a.MUNICIPIO).localeCompare(b.DEPARTAMENTO+b.MUNICIPIO));
+  XLSX.utils.book_append_sheet(wb, hoja(PLAN_COLS, plans.map(o => PLAN_COLS.map(c => o[c])), new Set(), {MUNICIPIO:24, DEPARTAMENTO:20, DESTINATARIO:28, CORREO:45, NOTA:40}), 'Planeacion');
+  const ajs = Object.keys({...AJ_DEF, ...S.aj}).filter(k => S.aj[k] !== undefined || !k.startsWith('PLANTILLA') && !k.startsWith('ASUNTO')).map(k => [k, aj(k)]);
+  XLSX.utils.book_append_sheet(wb, hoja(['CLAVE','VALOR'], ajs, new Set(), {CLAVE:26, VALOR:100}), 'Ajustes');
+  if (S.matrix.header.length){ const ws = XLSX.utils.aoa_to_sheet([S.matrix.header, ...S.matrix.rows]); XLSX.utils.book_append_sheet(wb, ws, 'Matrix'); }
+  const nombre = `Seguimiento_Saneamiento_${hoyISO()}.xlsx`;
+  XLSX.writeFile(wb, nombre);
+  dirty = false; $('#dirty').hidden = true;
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  toast('Excel descargado: ' + nombre);
+}
+
+/* ============ lógica de pendientes ============ */
+function pendiente(r){
+  const e = r._e, d = diasHab(r['FECHA ETAPA']) ?? 0, pl = plazo();
+  switch (e){
+    case 'E1': return {tipo:'solPlan', txt:'Pedir certificado de uso del suelo a Planeación', d};
+    case 'E2': case 'E3': return d >= pl ? {tipo:'reitPlan', txt:`${d} días hábiles sin respuesta de Planeación: reiterar`, d}
+                                         : {tipo:'esperaPlan', txt:`Esperando respuesta de Planeación (${d} de ${pl} días hábiles)`, d, espera:true, faltan:pl-d};
+    case 'E4': return {tipo:'orip', txt:'Tiene respuesta de Planeación: ¿la enviamos a la ORIP?', d};
+    case 'E5': case 'E6': return d >= pl ? {tipo:'reitOrip', txt:`${d} días hábiles sin respuesta de la ORIP: reiterar`, d}
+                                         : {tipo:'esperaOrip', txt:`Esperando a la ORIP (${d} de ${pl} días hábiles)`, d, espera:true, faltan:pl-d};
+    case 'E7': return {tipo:'atender', txt:'La ORIP pidió algo o rechazó: revisar y atender', d};
+    case 'XS': case 'XM': case 'XP': return {tipo:'interno', txt:'Gestión interna: ' + ET[e].label, d};
+    case 'XN': return {tipo:'definir', txt:'Definir en qué etapa está', d};
+    default: return null;
+  }
+}
+const GRUPOS = [
+  {tipo:'orip',     titulo:'Enviar a la ORIP', desc:'Ya llegó la certificación de Planeación y no consta que se haya enviado a la ORIP. Arma el correo, adjunta el certificado y márcalo como enviado.'},
+  {tipo:'reitOrip', titulo:'Reiterar a la ORIP', desc:'Se envió o reiteró a la ORIP y pasó el plazo sin que el folio aparezca corregido.'},
+  {tipo:'reitPlan', titulo:'Reiterar a Planeación', desc:'Se pidió la certificación y pasó el plazo sin respuesta. Se arma un solo correo por municipio con todos sus folios.', porMunicipio:true},
+  {tipo:'solPlan',  titulo:'Pedir a Planeación', desc:'Folios que aún no se han solicitado a la Secretaría de Planeación.', porMunicipio:true},
+  {tipo:'atender',  titulo:'Atender a la ORIP', desc:'La ORIP rechazó o pidió algo (acto administrativo, radicar en persona, certificado catastral…). Revisa la ficha y registra qué se hizo.'},
+  {tipo:'definir',  titulo:'Definir etapa', desc:'Folios sin un estado claro en la base.'},
+  {tipo:'interno',  titulo:'Gestión interna', desc:'Saneamiento físico-catastral, cambios en Matrix o piezas procesales. No dependen de Planeación ni de la ORIP.'},
+];
+
+/* ============ render ============ */
+function renderTodo(){
+  if (!S) return;
+  $('#vacio').hidden = true;
+  $('#btnExport').disabled = false;
+  $('#fileInfo').textContent = `${S.fileName} · ${S.seg.length} folios`;
+  renderPend(); renderFolios(); renderOrip(); renderPlan(); renderListas();
+  if (!renderTodo._aj) { renderAjustes(); renderTodo._aj = true; }
+}
+function filaFolio(r, p, extra=''){
+  const o = S.orip[r['CÓDIGO ORIP']] || {};
+  return `<tr class="click" data-fmi="${esc(r.FMI)}">
+    <td><span class="fmi">${esc(r.FMI)}</span></td>
+    <td>${esc(r.MUNICIPIO)}<div class="small muted">${esc(r.DEPARTAMENTO)}</div></td>
+    <td>${esc(o.ORIP || r['CÓDIGO ORIP'])}</td>
+    <td>${badge(r._e)}<div class="small muted">desde ${fmt(r['FECHA ETAPA'])}</div></td>
+    <td class="dias ${p && !p.espera && p.d >= plazo() ? 'v' : ''}">${p ? p.d : ''}</td>
+    <td class="small">${esc(r.ENCARGADO)}</td>
+    <td>${extra}</td></tr>`;
+}
+const THEAD = '<thead><tr><th>FMI</th><th>Municipio</th><th>ORIP</th><th>Etapa</th><th>Días háb.</th><th>Encargado</th><th></th></tr></thead>';
+
+function renderPend(){
+  const items = S.seg.map(r => ({r, p:pendiente(r)})).filter(x => x.p);
+  const accion = items.filter(x => !x.p.espera);
+  $('#nPend').textContent = accion.filter(x => x.p.tipo !== 'interno').length;
+  const cnt = t => accion.filter(x => x.p.tipo === t).length;
+  const pronto = items.filter(x => x.p.espera && x.p.faltan <= 3);
+  let h = `<div class="kpis">
+    <div class="kpi alert"><div class="v">${cnt('orip')}</div><div class="l">por enviar a la ORIP</div></div>
+    <div class="kpi alert"><div class="v">${cnt('reitOrip')}</div><div class="l">por reiterar a la ORIP</div></div>
+    <div class="kpi alert"><div class="v">${cnt('reitPlan')}</div><div class="l">por reiterar a Planeación</div></div>
+    <div class="kpi"><div class="v">${items.filter(x=>x.p.espera).length}</div><div class="l">en espera dentro del plazo</div></div>
+    <div class="kpi"><div class="v">${S.seg.filter(r=>r._e==='E8').length}</div><div class="l">corregidos / entregados</div></div>
+  </div>
+  <div class="card row" style="padding:10px 14px"><span class="small muted">Filtrar:</span>
+    <select id="pEnc"><option value="">Todos los encargados</option>${[...new Set(S.seg.map(r=>r.ENCARGADO).filter(Boolean))].sort().map(e=>`<option ${e===renderPend._enc?'selected':''}>${esc(e)}</option>`).join('')}</select>
+    <span class="small muted">El plazo para reiterar es de ${plazo()} días hábiles, contados desde la última actualización de cada folio y sin festivos de Colombia.</span></div>`;
+  const enc = renderPend._enc || '';
+  const okEnc = x => !enc || x.r.ENCARGADO === enc;
+  for (const g of GRUPOS){
+    const lst = accion.filter(x => x.p.tipo === g.tipo && okEnc(x)).sort((a,b) => b.p.d - a.p.d);
+    if (!lst.length) continue;
+    h += `<div class="card grp"><h3>${g.titulo} <span class="cnt">${lst.length}</span></h3><div class="desc">${g.desc}</div>`;
+    if (g.porMunicipio){
+      const grupos = new Map();
+      for (const x of lst){ const k = keyPlan(x.r.MUNICIPIO, x.r.DEPARTAMENTO); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(x); }
+      const orden = [...grupos.entries()].sort((a,b) => Math.max(...b[1].map(x=>x.p.d)) - Math.max(...a[1].map(x=>x.p.d)));
+      for (const [k, xs] of orden){
+        const pl = S.plan[k], r0 = xs[0].r;
+        h += `<div class="mgrp"><div class="hd"><b>${esc(r0.MUNICIPIO)} · ${esc(r0.DEPARTAMENTO)}</b>
+          <span class="small muted">${xs.length} folio(s) · hasta ${Math.max(...xs.map(x=>x.p.d))} días hábiles</span>
+          ${pl && pl.CORREO ? '' : '<span class="warn">Falta el correo de Planeación en el directorio</span>'}
+          <div style="flex:1"></div>
+          <button class="btn sm pri" data-mail="${g.tipo}" data-grupo="${esc(k)}" data-enc="${esc(enc)}">Armar correo (${xs.length})</button></div>
+          <table>${THEAD}<tbody>${xs.map(x => filaFolio(x.r, x.p, `<span class="small muted">${x.r['RADICADO PLANEACIÓN'] ? 'Rad. ' + esc(x.r['RADICADO PLANEACIÓN']) : ''}</span>`)).join('')}</tbody></table></div>`;
+      }
+    } else {
+      h += `<table>${THEAD}<tbody>${lst.map(x => {
+        let b = '';
+        if (g.tipo === 'orip' || g.tipo === 'reitOrip'){
+          const o = S.orip[x.r['CÓDIGO ORIP']];
+          b = `<button class="btn sm pri" data-mail="${g.tipo}" data-fmi="${esc(x.r.FMI)}">Armar correo</button>${o && o.CORREO ? '' : '<div class="warn">Falta el correo de esta ORIP</div>'}`;
+        } else b = `<button class="btn sm" data-abrir="${esc(x.r.FMI)}">Abrir ficha</button>`;
+        return filaFolio(x.r, x.p, b);
+      }).join('')}</tbody></table>`;
+    }
+    h += '</div>';
+  }
+  if (pronto.length){
+    h += `<div class="card grp"><h3>Por vencer en 3 días hábiles o menos <span class="cnt">${pronto.length}</span></h3><div class="desc">Todavía están dentro del plazo. Te los muestro para que los tengas presentes.</div>
+      <table>${THEAD}<tbody>${pronto.filter(okEnc).sort((a,b)=>a.p.faltan-b.p.faltan).map(x => filaFolio(x.r, x.p, `<span class="small muted">faltan ${x.p.faltan}</span>`)).join('')}</tbody></table></div>`;
+  }
+  if (!accion.length) h += '<div class="card">No hay nada pendiente.</div>';
+  $('#s-pend').innerHTML = h;
+  $('#pEnc').onchange = e => { renderPend._enc = e.target.value; renderPend(); };
+}
+
+let filtroEtapa = '';
+function renderFolios(){
+  $('#nFol').textContent = S.seg.length;
+  const cuenta = {}; S.seg.forEach(r => cuenta[r._e] = (cuenta[r._e]||0) + 1);
+  $('#chips').innerHTML = `<span class="chip ${filtroEtapa===''?'on':''}" data-et="">Todas <b>${S.seg.length}</b></span>` +
+    ETAPAS.filter(e => cuenta[e.id]).map(e => `<span class="chip ${filtroEtapa===e.id?'on':''}" data-et="${e.id}"><span class="dot" style="background:${e.color}"></span>${esc(e.label)} <b>${cuenta[e.id]}</b></span>`).join('');
+  const q = norm($('#fBuscar').value), enc = $('#fEnc').value, orip = $('#fOrip').value, solo = $('#fSoloPend').checked;
+  const lst = S.seg.filter(r => {
+    if (filtroEtapa && r._e !== filtroEtapa) return false;
+    if (enc && r.ENCARGADO !== enc) return false;
+    if (orip && r['CÓDIGO ORIP'] !== orip) return false;
+    const p = pendiente(r);
+    if (solo && (!p || p.espera)) return false;
+    if (q && !norm([r.FMI, r.MUNICIPIO, r.DEPARTAMENTO, r['CÉDULA CATASTRAL'], r.OBSERVACIONES, r.SOLICITANTE, r.MOTIVO, r['NÚMERO MATRIX']].join(' ')).includes(q)) return false;
+    return true;
+  });
+  $('#tFolios').innerHTML = `<thead><tr><th>FMI</th><th>Municipio</th><th>ORIP</th><th>Etapa</th><th>Días háb.</th><th>Encargado</th><th>Qué falta</th></tr></thead><tbody>` +
+    lst.map(r => { const p = pendiente(r); return filaFolio(r, p, `<span class="small ${p && !p.espera ? 'warn' : 'muted'}">${p ? esc(p.txt) : ''}</span>`); }).join('') +
+    (lst.length ? '' : '<tr><td colspan="7" class="muted">Ningún folio coincide con el filtro.</td></tr>') + '</tbody>';
+}
+function renderListas(){
+  const encs = [...new Set(S.seg.map(r=>r.ENCARGADO).filter(Boolean))].sort();
+  const cur = $('#fEnc').value;
+  $('#fEnc').innerHTML = '<option value="">Todos los encargados</option>' + encs.map(e => `<option ${e===cur?'selected':''}>${esc(e)}</option>`).join('');
+  const codes = [...new Set(S.seg.map(r=>r['CÓDIGO ORIP']))].sort();
+  const co = $('#fOrip').value;
+  $('#fOrip').innerHTML = '<option value="">Todas las ORIP</option>' + codes.map(c => `<option value="${esc(c)}" ${c===co?'selected':''}>${esc(c)} · ${esc((S.orip[c]||{}).ORIP || '')}</option>`).join('');
+  $('#dlEnc').innerHTML = encs.map(e => `<option value="${esc(e)}">`).join('');
+  $('#dlSol').innerHTML = [...new Set(S.seg.map(r=>r.SOLICITANTE).filter(Boolean))].sort().map(e => `<option value="${esc(e)}">`).join('');
+}
+
+function renderOrip(){
+  const necesita = new Set(S.seg.filter(r => { const p = pendiente(r); return p && (p.tipo==='orip' || p.tipo==='reitOrip'); }).map(r => r['CÓDIGO ORIP']));
+  const nFol = {}; S.seg.forEach(r => nFol[r['CÓDIGO ORIP']] = (nFol[r['CÓDIGO ORIP']]||0)+1);
+  for (const c of Object.keys(nFol)) if (!S.orip[c]) S.orip[c] = {'CÓDIGO':c, ORIP:'', REGISTRADOR:'', CORREO:'', 'DIRECCIÓN':'', 'CIUDAD - DEPARTAMENTO':''};
+  const lst = Object.values(S.orip).sort((a,b) => (necesita.has(b['CÓDIGO']) && !b.CORREO) - (necesita.has(a['CÓDIGO']) && !a.CORREO) || a['CÓDIGO'].localeCompare(b['CÓDIGO']));
+  $('#tOrip').innerHTML = `<thead><tr><th style="width:70px">Código</th><th>ORIP</th><th>Registrador(a)</th><th>Correo</th><th>Dirección</th><th>Ciudad - Depto.</th><th style="width:70px">Folios</th></tr></thead><tbody>` +
+    lst.map(o => `<tr class="${necesita.has(o['CÓDIGO']) && !o.CORREO ? 'miss' : ''}"><td class="fmi">${esc(o['CÓDIGO'])}</td>` +
+      ['ORIP','REGISTRADOR','CORREO','DIRECCIÓN','CIUDAD - DEPARTAMENTO'].map(k => `<td><input data-dir="orip" data-id="${esc(o['CÓDIGO'])}" data-k="${k}" value="${esc(o[k])}" ${k==='CORREO'?'placeholder="ofiregis…@supernotariado.gov.co"':''}></td>`).join('') +
+      `<td class="small muted">${nFol[o['CÓDIGO']]||0}${necesita.has(o['CÓDIGO'])?' · <b class="warn">pendiente</b>':''}</td></tr>`).join('') + '</tbody>';
+}
+function renderPlan(){
+  const necesita = new Set(S.seg.filter(r => { const p = pendiente(r); return p && (p.tipo==='reitPlan' || p.tipo==='solPlan'); }).map(r => keyPlan(r.MUNICIPIO, r.DEPARTAMENTO)));
+  const nFol = {};
+  S.seg.forEach(r => { if (!r.MUNICIPIO) return; const k = keyPlan(r.MUNICIPIO, r.DEPARTAMENTO); nFol[k] = (nFol[k]||0)+1;
+    if (!S.plan[k]) S.plan[k] = {MUNICIPIO:norm(r.MUNICIPIO), DEPARTAMENTO:norm(r.DEPARTAMENTO), DESTINATARIO:'Secretaría de Planeación', CORREO:'', 'DIRECCIÓN':'', NOTA:''}; });
+  const lst = Object.entries(S.plan).sort((a,b) => (necesita.has(b[0]) && !b[1].CORREO) - (necesita.has(a[0]) && !a[1].CORREO) || (a[1].DEPARTAMENTO+a[1].MUNICIPIO).localeCompare(b[1].DEPARTAMENTO+b[1].MUNICIPIO));
+  $('#tPlan').innerHTML = `<thead><tr><th>Municipio</th><th>Departamento</th><th>Destinatario</th><th>Correo</th><th>Dirección</th><th>Nota</th><th style="width:70px">Folios</th></tr></thead><tbody>` +
+    lst.map(([k,o]) => `<tr class="${necesita.has(k) && !o.CORREO ? 'miss' : ''}"><td><b>${esc(o.MUNICIPIO)}</b></td><td>${esc(o.DEPARTAMENTO)}</td>` +
+      ['DESTINATARIO','CORREO','DIRECCIÓN','NOTA'].map(f => `<td><input data-dir="plan" data-id="${esc(k)}" data-k="${f}" value="${esc(o[f])}"></td>`).join('') +
+      `<td class="small muted">${nFol[k]||0}${necesita.has(k)?' · <b class="warn">pendiente</b>':''}</td></tr>`).join('') + '</tbody>';
+}
+function renderAjustes(){
+  let h = `<div class="card"><h3 style="margin-top:0">Ajustes de los correos</h3><div class="fields">`;
+  for (const k of ['PLAZO_DIAS_HABILES','ORIP_PARA_ADICIONAL','CC','CORREOS_RESPUESTA','FIRMA_NOMBRE','FIRMA_CARGO'])
+    h += `<label class="${k==='CC'||k==='CORREOS_RESPUESTA'?'w2':''}">${AJ_LABELS[k]}<input data-aj="${k}" value="${esc(aj(k))}"></label>`;
+  h += `</div></div><div class="card"><h3 style="margin-top:0">Plantillas</h3>
+    <p class="small muted">Puedes editar el texto. Las palabras entre llaves se reemplazan solas: {FMI}, {MUNICIPIO}, {DEPARTAMENTO}, {ORIP}, {REGISTRADOR}, {CORREO_ORIP}, {DIRECCION_ORIP}, {CIUDAD_ORIP}, {USO_CORRECTO}, {USO_INCORRECTO}, {UBICACION_PERIMETRO}, {REF_ENVIO_ORIP}, {REF_SOLICITUD}, {LISTA_PREDIOS}, {DIAS}, {CORREO_PLAN}, {CORREOS_RESPUESTA}, {FIRMA_NOMBRE}, {FIRMA_CARGO}.</p>`;
+  for (const [a,p] of [['ASUNTO_ORIP','PLANTILLA_ORIP'],['ASUNTO_REIT_ORIP','PLANTILLA_REIT_ORIP'],['ASUNTO_SOL_PLAN','PLANTILLA_SOL_PLAN'],['ASUNTO_REIT_PLAN','PLANTILLA_REIT_PLAN']])
+    h += `<details><summary>${AJ_LABELS[p].replace('Texto: ','')}</summary><div class="fields"><label class="wall">${AJ_LABELS[a]}<input data-aj="${a}" value="${esc(aj(a))}"></label>
+      <label class="wall">${AJ_LABELS[p]}<textarea rows="16" data-aj="${p}">${esc(aj(p))}</textarea></label></div>
+      <button class="btn sm ghost" data-restaurar="${a},${p}">Restaurar el texto original</button></details>`;
+  h += `</div><div class="card"><h3 style="margin-top:0">Cómo decide la página qué falta</h3>
+    <table><tbody>
+    <tr><td>${badge('E1')}</td><td>Sugiere pedir la certificación a Planeación, con un correo por municipio.</td></tr>
+    <tr><td>${badge('E2')} ${badge('E3')}</td><td>Cuando pasan ${plazo()} días hábiles desde la última actualización, sugiere reiterar a Planeación.</td></tr>
+    <tr><td>${badge('E4')}</td><td>Pregunta de una vez si se envía a la ORIP y arma el correo con tu plantilla.</td></tr>
+    <tr><td>${badge('E5')} ${badge('E6')}</td><td>Cuando pasan ${plazo()} días hábiles, sugiere reiterar a la ORIP.</td></tr>
+    <tr><td>${badge('E7')}</td><td>Lo muestra para que lo atiendas y registres qué se hizo.</td></tr>
+    <tr><td>${badge('E8')}</td><td>No pide nada más.</td></tr>
+    </tbody></table></div>`;
+  $('#s-ajustes').innerHTML = h;
+}
+
+/* ============ ficha del folio ============ */
+let fichaFmi = null;
+function abrirFicha(fmi){
+  const r = S.seg.find(x => x.FMI === fmi); if (!r) return;
+  fichaFmi = fmi;
+  $('#dfTitulo').textContent = 'FMI ' + r.FMI;
+  $('#dfBadge').innerHTML = badge(r._e);
+  const p = pendiente(r), o = S.orip[r['CÓDIGO ORIP']] || {};
+  const campo = (c, cls='') => {
+    const v = r[c] ?? '';
+    if (SEG_DATES.has(c)) return `<label class="${cls}">${esc(c)}<input type="date" data-f="${esc(c)}" value="${esc(v)}"></label>`;
+    if (c.startsWith('TIPO EN FOLIO') || c.startsWith('TIPO CORRECTO')) return `<label class="${cls}">${esc(c)}<select data-f="${esc(c)}">${TIPOS.map(t=>`<option ${norm(t)===norm(v)?'selected':''}>${t}</option>`).join('')}</select></label>`;
+    if (c === 'QUIÉN ENVIÓ A ORIP') return `<label>${esc(c)}<select data-f="${esc(c)}">${['','SAE','Planeación'].map(t=>`<option ${t===v?'selected':''}>${t}</option>`).join('')}</select></label>`;
+    if (c === 'OBSERVACIONES' || c === 'ESTADO ORIGINAL (MIGRACIÓN)') return `<label class="wall">${esc(c)}<textarea rows="${c==='OBSERVACIONES'?4:2}" data-f="${esc(c)}" ${c.startsWith('ESTADO')?'readonly':''}>${esc(v)}</textarea></label>`;
+    return `<label class="${cls}">${esc(c)}<input data-f="${esc(c)}" value="${esc(v)}" ${c==='FMI'?'readonly':''} ${c==='ENCARGADO'?'list="dlEnc"':''} ${c==='SOLICITANTE'?'list="dlSol"':''}></label>`;
+  };
+  const bits = S.bit.filter(b => b.FMI === fmi).sort((a,b) => b.FECHA.localeCompare(a.FECHA) || b['FECHA REGISTRO'].localeCompare(a['FECHA REGISTRO']));
+  const sig = SIGUIENTE[r._e];
+  let mails = '';
+  if (['E4','E5','E6','E7'].includes(r._e)) mails += `<button class="btn sm" data-mail="orip" data-fmi="${esc(fmi)}">Correo de envío a la ORIP</button>`;
+  if (['E5','E6','E7'].includes(r._e)) mails += `<button class="btn sm" data-mail="reitOrip" data-fmi="${esc(fmi)}">Correo de reiteración a la ORIP</button>`;
+  if (['E1','XN'].includes(r._e)) mails += `<button class="btn sm" data-mail="solPlan" data-fmi="${esc(fmi)}">Correo de solicitud a Planeación</button>`;
+  if (['E2','E3'].includes(r._e)) mails += `<button class="btn sm" data-mail="reitPlan" data-fmi="${esc(fmi)}">Correo de reiteración a Planeación</button>`;
+  $('#dfBody').innerHTML = `
+    ${p && !p.espera ? `<div class="note" style="margin-bottom:12px"><b>Qué falta:</b> ${esc(p.txt)}</div>` : p ? `<div class="small muted" style="margin-bottom:12px">${esc(p.txt)}</div>` : ''}
+    <div class="cols2">
+      <div>
+        <div class="card" style="box-shadow:none">
+          <h3 style="margin:0 0 10px">Registrar un movimiento</h3>
+          <div class="fields">
+            <label class="w2">Nueva etapa<select id="mvEtapa">${ETAPAS.map(e=>`<option value="${e.id}" ${e.id===sig?'selected':''}>${esc(e.label)}</option>`).join('')}</select></label>
+            <label>Fecha<input type="date" id="mvFecha" value="${hoyISO()}"></label>
+            <label>Radicado / turno (opcional)<input id="mvRad"></label>
+            <label class="wall">Detalle<input id="mvDet" placeholder="ej. Planeación respondió con certificado; uso URBANO"></label>
+          </div>
+          <div class="row" style="margin-top:10px"><button class="btn pri" id="mvGuardar">Registrar</button>
+            <span class="small muted">Queda en la bitácora con tu nombre.</span></div>
+          ${mails ? `<div class="row" style="margin-top:12px">${mails}</div>` : ''}
+        </div>
+        <h3 style="margin:16px 0 8px">Bitácora</h3>
+        <div class="tl">${bits.map(b => { const id = etapaId(b.ETAPA); return `<div class="it" style="--c:${ET[id].color}"><div><b>${fmt(b.FECHA)}</b> · ${esc(ET[id].label)}</div><div>${esc(b.DETALLE)}</div><div class="m">${esc(b['REGISTRADO POR'])}${b['FECHA REGISTRO'] ? ' · registrado ' + fmt(b['FECHA REGISTRO']) : ''}</div></div>`; }).join('') || '<div class="muted small">Sin movimientos.</div>'}</div>
+      </div>
+      <div>
+        <div class="small muted" style="margin-bottom:8px">ORIP ${esc(r['CÓDIGO ORIP'])}: ${esc(o.ORIP||'—')} ${o.CORREO ? '· ' + esc(o.CORREO) : '<span class="warn">(sin correo en el directorio)</span>'}</div>
+        <div class="fields">${SEG_COLS.filter(c => !['ETAPA'].includes(c)).map(c => campo(c)).join('')}</div>
+        <div class="row" style="margin-top:12px"><button class="btn dark" id="dfGuardar">Guardar datos</button><div style="flex:1"></div><button class="btn sm danger" id="dfBorrar">Quitar folio de la base</button></div>
+      </div>
+    </div>`;
+  if (!dFolio.open) dFolio.showModal();
+  $('#mvGuardar').onclick = () => {
+    const e = $('#mvEtapa').value, f = $('#mvFecha').value || hoyISO(), rad = $('#mvRad').value.trim();
+    let det = $('#mvDet').value.trim() || ET[e].label;
+    if (rad) det += ` (rad./turno ${rad})`;
+    aplicarEtapa(r, e, f, det, rad);
+    marcarCambio(); abrirFicha(fmi); toast('Movimiento registrado');
+  };
+  $('#dfGuardar').onclick = () => {
+    $$('#dfBody [data-f]').forEach(el => { const c = el.dataset.f; if (c === 'FMI' || c.startsWith('ESTADO ORIGINAL')) return; r[c] = c === 'REITERACIONES' ? (parseInt(el.value)||0) : el.value.trim(); });
+    marcarCambio(); abrirFicha(fmi); toast('Datos guardados');
+  };
+  $('#dfBorrar').onclick = () => {
+    if (!confirm(`¿Quitar el folio ${fmi} de la base? Su bitácora también se borra.`)) return;
+    S.seg = S.seg.filter(x => x.FMI !== fmi); S.bit = S.bit.filter(b => b.FMI !== fmi);
+    dFolio.close(); marcarCambio(); toast('Folio quitado');
+  };
+}
+function aplicarEtapa(r, e, fecha, detalle, rad=''){
+  r._e = e; r.ETAPA = ET[e].label; r['FECHA ETAPA'] = fecha;
+  if (e === 'E2'){ if (!r['FECHA SOLICITUD PLANEACIÓN']) r['FECHA SOLICITUD PLANEACIÓN'] = fecha; if (rad) r['RADICADO PLANEACIÓN'] = rad; }
+  if (e === 'E3' || e === 'E6') r.REITERACIONES = (parseInt(r.REITERACIONES)||0) + 1;
+  if (e === 'E3' && rad) r['RADICADO PLANEACIÓN'] = r['RADICADO PLANEACIÓN'] ? r['RADICADO PLANEACIÓN'] + ' / ' + rad : rad;
+  if (e === 'E4'){ r['FECHA RESPUESTA PLANEACIÓN'] = fecha; if (rad) r['RADICADO ALCALDÍA'] = rad; }
+  if (e === 'E5'){ r['FECHA ENVÍO ORIP'] = fecha; if (!r['QUIÉN ENVIÓ A ORIP']) r['QUIÉN ENVIÓ A ORIP'] = 'SAE'; if (rad) r['RADICADO/TURNO ORIP'] = rad; }
+  if (e === 'E6' && rad) r['RADICADO/TURNO ORIP'] = r['RADICADO/TURNO ORIP'] ? r['RADICADO/TURNO ORIP'] + ' / ' + rad : rad;
+  S.bit.push({FMI:r.FMI, FECHA:fecha, ETAPA:ET[e].label, DETALLE:detalle, 'REGISTRADO POR':usuario(), 'FECHA REGISTRO':hoyISO()});
+}
+
+/* ============ correos ============ */
+function llenar(t, v){ return t.replace(/\{([A-Z_]+)\}/g, (m,k) => v[k] !== undefined ? v[k] : m); }
+function varsBase(){ return {CORREOS_RESPUESTA:aj('CORREOS_RESPUESTA'), FIRMA_NOMBRE:aj('FIRMA_NOMBRE'), FIRMA_CARGO:aj('FIRMA_CARGO')}; }
+const listaCorreos = s => String(s||'').split(/[;,\s]+/).map(x=>x.trim()).filter(x => x.includes('@'));
+function usoVars(r){
+  const c = norm(r['TIPO CORRECTO (PLANEACIÓN)']);
+  if (c === 'URBANO') return {USO_CORRECTO:'URBANO', USO_INCORRECTO:'RURAL o SIN INFORMACIÓN', UBICACION_PERIMETRO:'está inmerso en el perímetro urbano'};
+  if (c === 'RURAL')  return {USO_CORRECTO:'RURAL', USO_INCORRECTO:'URBANO o SIN INFORMACIÓN', UBICACION_PERIMETRO:'se encuentra por fuera del perímetro urbano'};
+  return {USO_CORRECTO:'[TIPO CORRECTO]', USO_INCORRECTO:'[TIPO INCORRECTO]', UBICACION_PERIMETRO:'[ubicación respecto al perímetro urbano]'};
+}
+function armarCorreo(tipo, fmis){
+  const rs = fmis.map(f => S.seg.find(x => x.FMI === f)).filter(Boolean);
+  const avisos = [];
+  if (tipo === 'orip' || tipo === 'reitOrip'){
+    const r = rs[0], o = S.orip[r['CÓDIGO ORIP']] || {};
+    if (!o.CORREO) avisos.push(`Falta el correo de la ORIP ${r['CÓDIGO ORIP']} (${o.ORIP||'sin nombre'}). Llénalo en "Directorio ORIP".`);
+    if (!o.REGISTRADOR) avisos.push('Falta el nombre del registrador(a) en el directorio.');
+    if (!['URBANO','RURAL'].includes(norm(r['TIPO CORRECTO (PLANEACIÓN)']))) avisos.push('Elige el tipo correcto según la certificación de Planeación (abajo).');
+    let refEnvio = r['FECHA ENVÍO ORIP'] ? 'el ' + fmt(r['FECHA ENVÍO ORIP']) : 'previamente';
+    if (r['RADICADO/TURNO ORIP']) refEnvio += `, con radicado/turno No. ${r['RADICADO/TURNO ORIP']}`;
+    if (r['QUIÉN ENVIÓ A ORIP'] === 'Planeación') refEnvio += ` por la Secretaría de Planeación de ${r.MUNICIPIO}`;
+    const v = {...varsBase(), ...usoVars(r), FMI:r.FMI, MUNICIPIO:r.MUNICIPIO, DEPARTAMENTO:r.DEPARTAMENTO, ORIP:o.ORIP || '[ORIP]', REGISTRADOR:o.REGISTRADOR || '[NOMBRE DEL REGISTRADOR(A)]',
+      CORREO_ORIP:o.CORREO || '', DIRECCION_ORIP:o['DIRECCIÓN'] || '', CIUDAD_ORIP:o['CIUDAD - DEPARTAMENTO'] || '', REF_ENVIO_ORIP:refEnvio, DIAS:String(diasHab(r['FECHA ETAPA']) ?? '')};
+    const reit = tipo === 'reitOrip';
+    return {tipo, fmis:[r.FMI], to:[...listaCorreos(o.CORREO), ...listaCorreos(aj('ORIP_PARA_ADICIONAL'))], cc:listaCorreos(aj('CC')),
+      subject:llenar(aj(reit?'ASUNTO_REIT_ORIP':'ASUNTO_ORIP'), v), body:llenar(aj(reit?'PLANTILLA_REIT_ORIP':'PLANTILLA_ORIP'), v).replace(/\n{3,}/g,'\n\n'),
+      avisos, adjuntar: reit ? 'Adjunta la solicitud inicial y la certificación de uso del suelo.' : 'Adjunta la certificación de uso del suelo de Planeación (y la traza de correo).', uso:true};
+  }
+  const r0 = rs[0], k = keyPlan(r0.MUNICIPIO, r0.DEPARTAMENTO), pl = S.plan[k] || {};
+  if (!pl.CORREO) avisos.push(`Falta el correo de Planeación de ${r0.MUNICIPIO}. Llénalo en "Directorio Planeación".`);
+  const lista = rs.map((r,i) => `${i+1}. Folio de Matrícula Inmobiliaria No. ${r.FMI}` + (r['CÉDULA CATASTRAL'] ? ` - Cédula catastral ${r['CÉDULA CATASTRAL']}` : '') + (r['DIRECCIÓN'] ? ` - ${r['DIRECCIÓN']}` : '')).join('\n');
+  const rads = new Map();
+  rs.forEach(r => { if (r['RADICADO PLANEACIÓN']) rads.set(r['RADICADO PLANEACIÓN'], r['FECHA SOLICITUD PLANEACIÓN']); });
+  let ref = 'enviada previamente a esa Secretaría';
+  if (rads.size) ref = (rads.size > 1 ? 'radicada con los números ' : 'radicada con No. ') + [...rads].map(([n,f]) => n + (f ? ` del ${fmt(f)}` : '')).join(', ');
+  else { const fs = rs.map(r=>r['FECHA SOLICITUD PLANEACIÓN']).filter(Boolean).sort(); if (fs.length) ref = `enviada el ${fmt(fs[0])}`; }
+  const v = {...varsBase(), MUNICIPIO:r0.MUNICIPIO, DEPARTAMENTO:r0.DEPARTAMENTO, CORREO_PLAN:pl.CORREO || '', LISTA_PREDIOS:lista, REF_SOLICITUD:ref,
+    DIAS:String(Math.max(...rs.map(r => diasHab(r['FECHA ETAPA']) ?? 0)))};
+  const reit = tipo === 'reitPlan';
+  return {tipo, fmis:rs.map(r=>r.FMI), to:listaCorreos(pl.CORREO), cc:listaCorreos(aj('CC')),
+    subject:llenar(aj(reit?'ASUNTO_REIT_PLAN':'ASUNTO_SOL_PLAN'), v), body:llenar(aj(reit?'PLANTILLA_REIT_PLAN':'PLANTILLA_SOL_PLAN'), v).replace(/\n{3,}/g,'\n\n'),
+    avisos, adjuntar: reit ? 'Si la tienes, adjunta la solicitud inicial.' : ''};
+}
+let correoActual = null;
+const TIT = {orip:'Envío a la ORIP', reitOrip:'Reiteración a la ORIP', solPlan:'Solicitud a Planeación', reitPlan:'Reiteración a Planeación'};
+function abrirCorreo(tipo, fmis){
+  const m = armarCorreo(tipo, fmis); correoActual = m;
+  const r0 = S.seg.find(x => x.FMI === m.fmis[0]);
+  $('#dmTitulo').textContent = TIT[tipo] + (m.fmis.length > 1 ? ` · ${m.fmis.length} folios` : ' · FMI ' + m.fmis[0]);
+  $('#dmBody').innerHTML = `
+    ${m.avisos.length ? `<div class="note red" style="margin-bottom:10px">${m.avisos.map(esc).join('<br>')}</div>` : ''}
+    ${m.adjuntar ? `<div class="note" style="margin-bottom:10px">📎 ${esc(m.adjuntar)} Los adjuntos se agregan en Outlook.</div>` : ''}
+    <div class="fields">
+      <label class="w2">Para<input id="cmTo" value="${esc(m.to.join('; '))}"></label>
+      <label class="w2">CC<input id="cmCc" value="${esc(m.cc.join('; '))}"></label>
+      ${m.uso ? `<label>Tipo correcto (según Planeación)<select id="cmUso">${TIPOS.map(t=>`<option ${norm(t)===norm(r0['TIPO CORRECTO (PLANEACIÓN)'])?'selected':''}>${t}</option>`).join('')}</select></label>` : ''}
+      <label class="wall">Asunto<input id="cmSubj" value="${esc(m.subject)}"></label>
+      <label class="wall">Texto (puedes editarlo aquí antes de abrirlo)<textarea id="cmBody" class="mailbody">${esc(m.body)}</textarea></label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn dark" id="cmEml">Descargar borrador para Outlook (.eml)</button>
+      <button class="btn" id="cmWeb">Abrir en Outlook web</button>
+      <button class="btn" id="cmMailto">Abrir con mailto</button>
+      <button class="btn" id="cmCopy">Copiar texto</button>
+    </div>
+    <p class="small muted">El <b>.eml</b> se abre en Outlook de escritorio como un correo nuevo, con destinatarios, asunto y texto completos. "Outlook web" abre outlook.office.com con tu sesión institucional. El enlace mailto puede cortar textos largos.</p>
+    <div class="card" style="box-shadow:none;margin-top:10px;background:#f7faf8">
+      <div class="row"><b>¿Ya lo enviaste?</b>
+        <input id="cmRad" placeholder="Radicado / turno (opcional)" style="width:230px">
+        <button class="btn pri" id="cmEnviado">Marcar como enviado hoy</button></div>
+      <div class="small muted" style="margin-top:6px">Al marcarlo, ${m.fmis.length > 1 ? `los ${m.fmis.length} folios pasan` : 'el folio pasa'} a <b>${esc(ET[{orip:'E5',reitOrip:'E6',solPlan:'E2',reitPlan:'E3'}[tipo]].label)}</b>, queda la fecha de hoy en la bitácora y el conteo de días hábiles empieza de nuevo.</div>
+    </div>`;
+  if (!dMail.open) dMail.showModal();
+  const cur = () => ({to:$('#cmTo').value, cc:$('#cmCc').value, subject:$('#cmSubj').value, body:$('#cmBody').value});
+  if (m.uso) $('#cmUso').onchange = e => { r0['TIPO CORRECTO (PLANEACIÓN)'] = e.target.value; marcarCambio(); abrirCorreo(tipo, fmis); };
+  $('#cmEml').onclick = () => { const c = cur(); descargarEml(c, `${tipo}_${m.fmis.length>1 ? norm(r0.MUNICIPIO).replace(/\W+/g,'_') : m.fmis[0]}.eml`); };
+  $('#cmWeb').onclick = () => { const c = cur(); window.open('https://outlook.office.com/mail/deeplink/compose?' + ['to','cc','subject','body'].map(k => k + '=' + encodeURIComponent(k==='to'||k==='cc' ? listaCorreos(c[k]).join(';') : c[k])).join('&'), '_blank'); };
+  $('#cmMailto').onclick = () => { const c = cur(); const url = 'mailto:' + listaCorreos(c.to).join(';') + '?cc=' + encodeURIComponent(listaCorreos(c.cc).join(';')) + '&subject=' + encodeURIComponent(c.subject) + '&body=' + encodeURIComponent(c.body);
+    if (url.length > 1900) toast('El texto es largo: si sale cortado, usa el .eml'); location.href = url; };
+  $('#cmCopy').onclick = async () => { const c = cur(); try { await navigator.clipboard.writeText(c.body); toast('Texto copiado'); } catch(e) { $('#cmBody').select(); document.execCommand('copy'); toast('Texto copiado'); } };
+  $('#cmEnviado').onclick = () => {
+    const rad = $('#cmRad').value.trim(), hoy = hoyISO();
+    const e = {orip:'E5', reitOrip:'E6', solPlan:'E2', reitPlan:'E3'}[tipo];
+    const txt = {orip:'Enviado a la ORIP por la SAE (correo)', reitOrip:'Reiterado a la ORIP (correo)', solPlan:'Solicitud enviada a Planeación (correo)', reitPlan:'Reiterado a Planeación (correo)'}[tipo] + (rad ? ` · rad./turno ${rad}` : '') + ` · para: ${listaCorreos($('#cmTo').value).join(', ') || 'sin destinatario'}`;
+    for (const f of m.fmis){ const r = S.seg.find(x => x.FMI === f); if (r){ if (tipo === 'orip') r['QUIÉN ENVIÓ A ORIP'] = 'SAE'; aplicarEtapa(r, e, hoy, txt, rad); } }
+    dMail.close(); marcarCambio(); if (dFolio.open && fichaFmi) abrirFicha(fichaFmi);
+    toast(`${m.fmis.length} folio(s) actualizados`);
+  };
+}
+function b64utf8(s){ const bytes = new TextEncoder().encode(s); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000)); return btoa(bin); }
+function descargarEml(c, nombre){
+  const html = '<html><body style="font-family:Arial,sans-serif;font-size:11pt">' + c.body.split(/\n{2,}/).map(p => '<p style="margin:0 0 10pt;text-align:justify">' + esc(p).replace(/\n/g,'<br>') + '</p>').join('') + '</body></html>';
+  const eml = [
+    'To: ' + listaCorreos(c.to).join(', '),
+    listaCorreos(c.cc).length ? 'Cc: ' + listaCorreos(c.cc).join(', ') : null,
+    'Subject: =?UTF-8?B?' + b64utf8(c.subject) + '?=',
+    'X-Unsent: 1', 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '',
+    b64utf8(html).replace(/.{76}/g, '$&\r\n')
+  ].filter(x => x !== null).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([eml], {type:'message/rfc822'})); a.download = nombre; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('Borrador descargado: ábrelo con Outlook');
+}
+
+/* ============ agregar folios ============ */
+const NUEVO_CAMPOS = ['MUNICIPIO','DEPARTAMENTO','CÉDULA CATASTRAL','DIRECCIÓN','NÚMERO MATRIX','TIPO EN MATRIX'];
+function datosMatrix(fmi){
+  const row = MX.map.get(fmi); if (!row) return null; const ix = MX.ix, g = i => i >= 0 ? String(row[i] ?? '').trim() : '';
+  return {MUNICIPIO:g(ix.mun), DEPARTAMENTO:g(ix.dep), 'CÉDULA CATASTRAL':g(ix.ced), 'DIRECCIÓN':g(ix.dir), 'NÚMERO MATRIX':g(ix.mat), 'TIPO EN MATRIX':g(ix.tipo)};
+}
+function formNuevo(d={}){
+  $('#nFields').innerHTML = NUEVO_CAMPOS.map(c => `<label>${c}<input data-n="${c}" value="${esc(d[c]||'')}"></label>`).join('') + `
+    <label>Quién solicitó el cambio<input data-n="SOLICITANTE" list="dlSol"></label>
+    <label>Fecha de solicitud<input type="date" data-n="FECHA SOLICITUD" value="${hoyISO()}"></label>
+    <label>Encargado<input data-n="ENCARGADO" list="dlEnc" value="${esc($('#usuario').value)}"></label>
+    <label>Etapa inicial<select data-n="_e">${ETAPAS.map(e=>`<option value="${e.id}">${esc(e.label)}</option>`).join('')}</select></label>
+    <label>Tipo en folio (VUR)<select data-n="TIPO EN FOLIO (VUR)">${TIPOS.map(t=>`<option>${t}</option>`).join('')}</select></label>
+    <label>Tipo correcto (Planeación)<select data-n="TIPO CORRECTO (PLANEACIÓN)">${TIPOS.map(t=>`<option>${t}</option>`).join('')}</select></label>
+    <label class="wall">Motivo<input data-n="MOTIVO"></label>
+    <label class="wall">Observación<input data-n="OBSERVACIONES"></label>`;
+}
+function nuevoFolio(fmi, datos, extra){
+  const r = Object.fromEntries(SEG_COLS.map(c => [c, ''])); Object.assign(r, datos, extra);
+  r.FMI = fmi; r['CÓDIGO ORIP'] = codigoDe(fmi); r.REITERACIONES = 0; r.ORIGEN = r.ORIGEN || 'Agregado en la página';
+  const e = extra._e || 'E1'; delete r._e;
+  r._e = e; r.ETAPA = ET[e].label; r['FECHA ETAPA'] = extra['FECHA SOLICITUD'] || hoyISO();
+  S.seg.push(r);
+  S.bit.push({FMI:fmi, FECHA:r['FECHA ETAPA'], ETAPA:r.ETAPA, DETALLE:`Folio agregado a la base${r.SOLICITANTE ? ' · solicitado por ' + r.SOLICITANTE : ''}${r.MOTIVO ? ' · motivo: ' + r.MOTIVO : ''}`, 'REGISTRADO POR':usuario(), 'FECHA REGISTRO':hoyISO()});
+  return r;
+}
+const limpiarFmi = s => String(s).trim().toUpperCase().replace(/\s+/g,'');
+
+/* ============ eventos ============ */
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; $$('#tabs button').forEach(x => x.classList.toggle('on', x === b)); $$('main section').forEach(s => s.classList.toggle('on', s.id === 's-' + b.dataset.t)); };
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-mail]');
+  if (m){ e.stopPropagation(); if (!S) return;
+    let fmis;
+    if (m.dataset.grupo){ const enc = m.dataset.enc; fmis = S.seg.filter(r => keyPlan(r.MUNICIPIO, r.DEPARTAMENTO) === m.dataset.grupo && (!enc || r.ENCARGADO === enc) && (pendiente(r)||{}).tipo === m.dataset.mail).map(r => r.FMI); }
+    else fmis = [m.dataset.fmi];
+    abrirCorreo(m.dataset.mail, fmis); return; }
+  const a = e.target.closest('[data-abrir]'); if (a){ abrirFicha(a.dataset.abrir); return; }
+  const ch = e.target.closest('.chip'); if (ch){ filtroEtapa = ch.dataset.et; renderFolios(); return; }
+  const rs = e.target.closest('[data-restaurar]'); if (rs){ rs.dataset.restaurar.split(',').forEach(k => delete S.aj[k]); renderAjustes(); marcarCambio(); toast('Texto original restaurado'); return; }
+  const tr = e.target.closest('tr.click'); if (tr && !e.target.closest('button,input,select')) abrirFicha(tr.dataset.fmi);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.dir === 'orip'){ S.orip[t.dataset.id][t.dataset.k] = t.value.trim(); marcarCambio(); }
+  else if (t.dataset.dir === 'plan'){ S.plan[t.dataset.id][t.dataset.k] = t.value.trim(); marcarCambio(); }
+  else if (t.dataset.aj){ S.aj[t.dataset.aj] = t.value; marcarCambio(); if (t.dataset.aj === 'PLAZO_DIAS_HABILES') renderAjustes(); }
+});
+['#fBuscar','#fEnc','#fOrip','#fSoloPend'].forEach(s => $(s).addEventListener('input', () => S && renderFolios()));
+$('#usuario').value = (() => { try { return localStorage.getItem('seg_usuario') || ''; } catch(e) { return ''; } })();
+$('#usuario').onchange = e => { try { localStorage.setItem('seg_usuario', e.target.value.trim()); } catch(_) {} };
+
+async function leerArchivo(file){ const buf = await file.arrayBuffer(); return XLSX.read(buf, {type:'array', cellDates:true}); }
+$('#fileIn').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return; e.target.value = '';
+  if (dirty && !confirm('Tienes cambios sin descargar. ¿Cargar otro archivo de todas formas?')) return;
+  try {
+    if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar la librería para leer Excel. Revisa la conexión a internet.');
+    S = leerMaestro(await leerArchivo(f), f.name); MX = idxMatrix(S); dirty = false; $('#dirty').hidden = true;
+    try { localStorage.removeItem(LS_KEY); } catch(_) {}
+    renderTodo._aj = false; filtroEtapa = ''; renderTodo(); formNuevo(); toast(`${S.seg.length} folios cargados`);
+  } catch(err){ alert(err.message); }
+};
+$('#btnExport').onclick = () => S && exportar();
+$('#nBuscar').onclick = () => {
+  const fmi = limpiarFmi($('#nFmi').value); if (!fmi) return;
+  if (S.seg.some(r => r.FMI === fmi)){ $('#nMsg').innerHTML = `<span class="warn">El folio ${esc(fmi)} ya está en la base.</span> <button class="btn sm" data-abrir="${esc(fmi)}">Abrir su ficha</button>`; return; }
+  const d = datosMatrix(fmi);
+  $('#nMsg').innerHTML = d ? `Encontrado en Matrix. Revisa los datos y completa quién lo solicitó.` : `<span class="warn">No está en la Matrix cargada.</span> Llena los datos a mano.`;
+  formNuevo(d || {});
+};
+$('#nGuardar').onclick = () => {
+  const fmi = limpiarFmi($('#nFmi').value);
+  if (!/^[0-9A-Z]{2,4}-\d+$/.test(fmi)) { toast('Escribe un FMI válido, ej. 370-278830'); return; }
+  if (S.seg.some(r => r.FMI === fmi)) { toast('Ese folio ya está en la base'); return; }
+  const v = {}; $$('#nFields [data-n]').forEach(el => v[el.dataset.n] = el.value.trim());
+  const datos = Object.fromEntries(NUEVO_CAMPOS.map(c => [c, v[c]]));
+  nuevoFolio(fmi, datos, v);
+  $('#nFmi').value = ''; $('#nMsg').textContent = ''; formNuevo(); marcarCambio(); toast(`Folio ${fmi} agregado`); abrirFicha(fmi);
+};
+$('#mGuardar').onclick = () => {
+  const fmis = [...new Set($('#mLista').value.split(/[\n,;\t]+/).map(limpiarFmi).filter(Boolean))];
+  let ok = 0, rep = [], sinMx = [], inval = [];
+  for (const f of fmis){
+    if (!/^[0-9A-Z]{2,4}-\d+$/.test(f)) { inval.push(f); continue; }
+    if (S.seg.some(r => r.FMI === f)) { rep.push(f); continue; }
+    const d = datosMatrix(f); if (!d) sinMx.push(f);
+    nuevoFolio(f, d || {}, {SOLICITANTE:$('#mSol').value.trim(), 'FECHA SOLICITUD':$('#mFecha').value || hoyISO(), ENCARGADO:$('#mEnc').value.trim(), MOTIVO:$('#mMot').value.trim(), _e:$('#mEtapa').value});
+    ok++;
+  }
+  $('#mMsg').innerHTML = `${ok} agregados.` + (rep.length ? ` Ya estaban: ${esc(rep.join(', '))}.` : '') + (sinMx.length ? ` <span class="warn">Sin datos en Matrix: ${esc(sinMx.join(', '))}.</span>` : '') + (inval.length ? ` <span class="warn">No parecen FMI: ${esc(inval.join(', '))}.</span>` : '');
+  if (ok){ $('#mLista').value = ''; marcarCambio(); }
+};
+$('#mxIn').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return; e.target.value = '';
+  try {
+    const wb = await leerArchivo(f); let hecho = false;
+    for (const n of wb.SheetNames){
+      const a = aoa(wb.Sheets[n]); const hi = a.findIndex(r => r.some(v => norm(v) === norm('FOLIO DE MATRÍCULA')));
+      if (hi >= 0){ S.matrix = {header:a[hi].map(String), rows:a.slice(hi+1).filter(r => r.some(v => v !== ''))}; MX = idxMatrix(S); hecho = true; break; }
+    }
+    if (!hecho) throw new Error('No encontré una hoja con la columna "FOLIO DE MATRÍCULA".');
+    $('#mxInfo').textContent = `Matrix actualizada: ${S.matrix.rows.length} registros.`; marcarCambio();
+  } catch(err){ alert(err.message); }
+};
+$('#mEtapa').innerHTML = ETAPAS.map(e => `<option value="${e.id}">${esc(e.label)}</option>`).join('');
+$('#mFecha').value = hoyISO();
+window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
+
+/* ---- recuperar sesión sin descargar ---- */
+(function(){
+  try {
+    const raw = localStorage.getItem(LS_KEY); if (!raw) return;
+    const j = JSON.parse(raw); if (!j || !j.S) return;
+    const d = new Date(j.t);
+    $('#recuperar').innerHTML = `<div class="note" style="margin-top:14px;text-align:left">Hay cambios del ${d.toLocaleDateString('es-CO')} a las ${d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} que no se descargaron (${esc(j.S.fileName)}).
+      <div class="row" style="margin-top:8px"><button class="btn pri" id="btnRec">Recuperarlos</button><button class="btn" id="btnDesc">Descartar</button></div></div>`;
+    $('#btnRec').onclick = () => { S = j.S; MX = idxMatrix(S); dirty = true; $('#dirty').hidden = false; renderTodo(); formNuevo(); toast('Sesión recuperada. Recuerda descargar el Excel.'); };
+    $('#btnDesc').onclick = () => { localStorage.removeItem(LS_KEY); $('#recuperar').innerHTML = ''; };
+  } catch(e) {}
+})();
+$('#s-pend').classList.add('on');
+</script>
+</body>
+</html>
